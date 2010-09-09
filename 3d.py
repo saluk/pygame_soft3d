@@ -4,8 +4,10 @@ import psyco
 
 psyco.full()
 
-s_w,s_h = 320,200
-pygame.screen = s = pygame.display.set_mode([400,300],pygame.DOUBLEBUF)
+s_w,s_h = 200,150
+r_w,r_h = 400,300
+pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
+clock = pygame.time.Clock()
 pygame.surf = pygame.Surface([s_w,s_h])
 pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
 
@@ -21,20 +23,20 @@ def push(q,z=0):
     q[0][2]+=z
     q[3][2]+=z
 
-quad = [[0,0,100,0,0],
-            [140,0,100,1,0],
-            [140,140,100,1,1],
-            [0,140,100,0,1],
+quad = [[0,0,0,0,0],
+            [140,0,0,1,0],
+            [140,140,0,1,1],
+            [0,140,0,0,1],
             [255,255,255]]
-quad2 = [[0,0,120,0,0],
-            [140,0,120,1,0],
-            [140,140,120,1,1],
-            [0,140,120,0,1],
+quad2 = [[0,0,140,0,0],
+            [140,0,140,1,0],
+            [140,140,140,1,1],
+            [0,140,140,0,1],
             [255,0,0]]
-quad3 = [[0,0,100,0,0],
-            [0,0,520,1,0],
-            [0,140,520,1,1],
-            [0,140,100,1,1],
+quad3 = [[0,0,0,0,0],
+            [0,0,140,1,0],
+            [0,140,140,1,1],
+            [0,140,0,1,1],
             [0,255,0]]
 quads = [quad,quad2,quad3]
 
@@ -42,9 +44,18 @@ odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
 
 def draw_point(x,y,z,u,v,color=None):
-    z = float(z+0.1)
-    x = x/z*50+s_w//2
-    y = y/z*50+s_h//2
+    pygame.points += 1
+    #z = 0 to 1
+    #want z = 0 to 400
+    #z/z`=140/20
+    #z = 140/20*z`
+    z = float((z*1.0/300)+1)
+    if z<=0:
+        return
+    #x = 0 to s_w
+    #x = 0 to r_w
+    x = (x*s_w/float(r_w))/z+s_w//2
+    y = (y*s_w/float(r_w))/z+s_h//2
     x,y = int(x),int(y)
     if x<0 or x>=s_w or y<0 or y>=s_h:
         return
@@ -53,6 +64,19 @@ def draw_point(x,y,z,u,v,color=None):
     pygame.depth[y*s_w+x] = z
     if not color:
         color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
+        #~ r = abs(((color>>16) & 0xff))
+        #~ g = abs(((color>>8) & 0xff))
+        #~ b = abs(((color) & 0xff))
+        #~ r/=float(z*2)
+        #~ g/=float(z*2)
+        #~ b/=float(z*2)
+        #~ if r<0: r=0
+        #~ if r>255: r=255
+        #~ if g<0: g=0
+        #~ if g>255: g=255
+        #~ if b<0: b=0
+        #~ if b>255: b=255
+        #~ color = int((hex(r)[2:-1]+hex(g)[2:-1]+hex(b)[2:-1]),16)
     pygame.arr[x,y] = color
 
 def draw_line(s,e,color):
@@ -107,16 +131,13 @@ def draw_quad(q):
     zw2 = q[2][2]-q[3][2]
     uw2 = q[2][3]-q[3][3]
     vw2 = q[2][4]-q[3][4]
-    w = float(max([abs(x) for x in [xw1,yw1,zw1,uw1,vw1,xw2,yw2,zw2,uw2,vw2]]))
+    w = float(max([abs(x) for x in [xw1,zw1,xw2,zw2]]))/4
     d1 = [x/w for x in [xw1,yw1,zw1,uw1,vw1]]
     d2 = [x/w for x in [xw2,yw2,zw2,uw2,vw2]]
     p1 = [x1,y1,z1,u1,v1]
     p2 = [x2,y2,z2,u2,v2]
-    lp1 = [0]
     while w>0:
-        if int(lp1[0])!=int(p1[0]):
-            lp1 = p1[:]
-            draw_line(p1,p2,color)
+        draw_line(p1,p2,color)
         w-=1
         for i in range(5):
             p1[i]+=d1[i]
@@ -124,15 +145,18 @@ def draw_quad(q):
 
 running = 1
 while running:
+    dt = clock.tick(60)
+    pygame.display.set_caption("%s"%clock.get_fps())
+    pygame.points = 0
     for e in pygame.event.get():
         if e.type==pygame.QUIT:
             running = 0
     keys = pygame.key.get_pressed()
     spd = 5
     if keys[pygame.K_a]:
-        push(quads[0],z=spd)
+        [trans(quad,z=-spd) for quad in quads]
     if keys[pygame.K_z]:
-        push(quads[0],z=-spd)
+        [trans(quad,z=spd) for quad in quads]
     if keys[pygame.K_LEFT]:
         [trans(quad,x=-spd) for quad in quads]
     if keys[pygame.K_RIGHT]:
@@ -144,6 +168,7 @@ while running:
     pygame.depth = odepth[:]
     pygame.surf.fill([0,0,0])
     [draw_quad(q) for q in quads]
-    surf = pygame.transform.scale(pygame.surf,[400,300])
+    print pygame.points
+    surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
     pygame.screen.blit(surf,[0,0])
     pygame.display.flip()
