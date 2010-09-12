@@ -4,7 +4,7 @@ import psyco
 
 psyco.full()
 
-s_w,s_h = 200,150
+s_w,s_h = 100,75
 r_w,r_h = 400,300
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
@@ -206,7 +206,12 @@ def draw_quad1(q):
     zw2 = q[2][2]-q[3][2]
     uw2 = q[2][3]-q[3][3]
     vw2 = q[2][4]-q[3][4]
-    w = float(max([abs(x) for x in [xw1,zw1,xw2,zw2]]))/2
+    w = float(max([abs(x) for x in [xw1,zw1,xw2,zw2]]))
+    #sample based on average distance
+    az = ((q[0][2]+q[1][2]+q[2][2]+q[3][2])/140.0+2)
+    if az<=0:
+        return
+    w = 1/az*100
     d1 = [x/w for x in [xw1,yw1,zw1,uw1,vw1]]
     d2 = [x/w for x in [xw2,yw2,zw2,uw2,vw2]]
     p1 = [x1,y1,z1,u1,v1]
