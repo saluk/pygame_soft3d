@@ -9,10 +9,10 @@ r_w,r_h = 400,300
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 pygame.surf = pygame.Surface([s_w,s_h])
-pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
+pygame.arr = pygame.surfarray.pixels3d(pygame.surf)
 
 tex = pygame.image.load("bm.bmp").convert()
-texarr = pygame.surfarray.pixels2d(tex)
+texarr = pygame.surfarray.pixels3d(tex)
 
 def trans(q,x=0,y=0,z=0):
     for p in q[:4]:
@@ -23,21 +23,39 @@ def push(q,z=0):
     q[0][2]+=z
     q[3][2]+=z
 
-quad = [[0,0,0,0,0],
+class Quad:
+    def __init__(self,points,color):
+        self.points = points
+        self.color = color
+        self.calc_corners()
+    def calc_corners(self):
+        self.corners = []
+        for p in self.points:
+            tp = self.trans(p)
+            self.corners.append(tp)
+    def trans(self,p):
+        x,y,z,u,v = p
+        z = float((z*1.0/300)+1)
+        x = (x*s_w/float(r_w))/z+s_w//2
+        y = (y*s_w/float(r_w))/z+s_h//2
+        return [x,y,z,u,v]
+    def __getitem__(self,k):
+        return self.points[k]
+quad = Quad([[0,0,0,0,0],
             [140,0,0,1,0],
             [140,140,0,1,1],
-            [0,140,0,0,1],
-            [255,255,255]]
-quad2 = [[0,0,140,0,0],
+            [0,140,0,0,1]],
+            [255,255,255])
+quad2 = Quad([[0,0,140,0,0],
             [140,0,140,1,0],
             [140,140,140,1,1],
-            [0,140,140,0,1],
-            [255,0,0]]
-quad3 = [[0,0,0,0,0],
+            [0,140,140,0,1]],
+            [255,0,0])
+quad3 = Quad([[0,0,0,0,0],
             [0,0,140,1,0],
             [0,140,140,1,1],
-            [0,140,0,1,1],
-            [0,255,0]]
+            [0,140,0,1,1]],
+            [0,255,0])
 quads = [quad,quad2,quad3]
 
 odepth = [1000 for i in range(s_w*s_h)]
@@ -64,6 +82,7 @@ def draw_point(x,y,z,u,v,color=None):
     pygame.depth[y*s_w+x] = z
     if not color:
         color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
+        color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
         #~ r = abs(((color>>16) & 0xff))
         #~ g = abs(((color>>8) & 0xff))
         #~ b = abs(((color) & 0xff))
@@ -96,19 +115,14 @@ def draw_line(s,e,color):
         u+=us
         v+=vs
         
-def draw_tquad(q):
-    points = []
-    for p in q[:4]:
-        x,y,z = p
-        z = float(z+0.1)
-        x = x/z*120+200
-        y = y/z*120+150
-        x,y = int(x),int(y)
-        points.append([x,y])
-    pygame.gfxdraw.textured_polygon(s, points, tex, 0,0)
+def draw_quad2(q):
+    """Draws a quad by drawing 2 triangles, sample in screen space"""
+    q.calc_corners()
+    print q.corners
 
-def draw_quad(q):
-    color = q[4]
+def draw_quad1(q):
+    """Draws a quad by sampling in polygon space across and down"""
+    color = q.color
     #march start from q[0] to q[1]
     #march end from q[3] to q[2]
     x1 = q[0][0]
@@ -131,7 +145,7 @@ def draw_quad(q):
     zw2 = q[2][2]-q[3][2]
     uw2 = q[2][3]-q[3][3]
     vw2 = q[2][4]-q[3][4]
-    w = float(max([abs(x) for x in [xw1,zw1,xw2,zw2]]))/4
+    w = float(max([abs(x) for x in [xw1,zw1,xw2,zw2]]))/2
     d1 = [x/w for x in [xw1,yw1,zw1,uw1,vw1]]
     d2 = [x/w for x in [xw2,yw2,zw2,uw2,vw2]]
     p1 = [x1,y1,z1,u1,v1]
@@ -167,7 +181,7 @@ while running:
         [trans(quad,y=spd) for quad in quads]
     pygame.depth = odepth[:]
     pygame.surf.fill([0,0,0])
-    [draw_quad(q) for q in quads]
+    [draw_quad1(q) for q in quads]
     print pygame.points
     surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
     pygame.screen.blit(surf,[0,0])
