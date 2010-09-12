@@ -56,7 +56,13 @@ quad3 = Quad([[0,0,0,0,0],
             [0,140,140,1,1],
             [0,140,0,1,1]],
             [0,255,0])
-quads = [quad,quad2,quad3]
+quad4 = Quad([[0,0,0,0,0],
+            [0,0,140,1,0],
+            [0,140,140,1,1],
+            [0,140,0,1,1]],
+            [0,255,0])
+trans(quad4,x=140)
+quads = [quad,quad2,quad3,quad4]
 
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
@@ -82,20 +88,7 @@ def draw_point(x,y,z,u,v,color=None):
     pygame.depth[y*s_w+x] = z
     if not color:
         color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
-        color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
-        #~ r = abs(((color>>16) & 0xff))
-        #~ g = abs(((color>>8) & 0xff))
-        #~ b = abs(((color) & 0xff))
-        #~ r/=float(z*2)
-        #~ g/=float(z*2)
-        #~ b/=float(z*2)
-        #~ if r<0: r=0
-        #~ if r>255: r=255
-        #~ if g<0: g=0
-        #~ if g>255: g=255
-        #~ if b<0: b=0
-        #~ if b>255: b=255
-        #~ color = int((hex(r)[2:-1]+hex(g)[2:-1]+hex(b)[2:-1]),16)
+        #~ color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
     pygame.arr[x,y] = color
 
 def draw_line(s,e,color):
@@ -115,10 +108,78 @@ def draw_line(s,e,color):
         u+=us
         v+=vs
         
+def draw_point2(x,y,z,u,v):
+    pygame.points += 1
+    if x<0 or x>=s_w:
+        return
+    if y<0 or y>=s_h:
+        return
+    if pygame.depth[y*s_w+x]<z:
+        return
+    pygame.depth[y*s_w+x] = z
+    #~ if u>1: u=1
+    #~ if u<0: u=0
+    #~ if v>1: v=1
+    #~ if v<0: v=0
+    color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
+    #color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
+    pygame.arr[x,y] = color
+
+def draw_line2(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
+    x,y,z,u,v = x1,y1,z1,u1,v1
+    w = abs(x2-x1)
+    if not w:
+        return
+    dx = (x2-x1)/w
+    dy = (y2-y1)/w
+    dz = (z2-z1)/w
+    du = (u2-u1)/w
+    dv = (v2-v1)/w
+    while 1:
+        draw_point2(int(x),int(y),z,u,v)
+        x+=dx
+        y+=dy
+        z+=dz
+        u+=du
+        v+=dv
+        if x2>x1 and x>x2:
+            break
+        if x2<x1 and x<x2:
+            break
+        
 def draw_quad2(q):
-    """Draws a quad by drawing 2 triangles, sample in screen space"""
+    """Draws a quad sample in screen space"""
     q.calc_corners()
-    print q.corners
+    ul = q.corners[0]
+    ur = q.corners[1]
+    br = q.corners[2]
+    bl = q.corners[3]
+    #left side and right side moving from top to bottom
+    left = ul
+    right = ur
+    dy = 1
+    w = abs(bl[1]-ul[1])
+    dxl = (bl[0]-ul[0])/w
+    dxr = (ur[0]-br[0])/w
+    dzl = (bl[2]-ul[2])/w
+    dzr = (ur[2]-br[2])/w
+    dul = (bl[3]-ul[3])/w
+    dur = (ur[3]-br[3])/w
+    dvl = (bl[4]-ul[4])/w
+    dvr = (ur[4]-br[4])/w
+    while left[1]<bl[1]:
+        draw_line2(*(left+right))
+        left[0]+=dxl
+        left[1]+=dy
+        left[2]+=dzl
+        left[3]+=dul
+        left[4]+=dvl
+        right[0]+=dxr
+        right[1]+=dy
+        right[2]+=dzr
+        right[3]+=dur
+        right[4]+=dvr
+    
 
 def draw_quad1(q):
     """Draws a quad by sampling in polygon space across and down"""
@@ -157,6 +218,8 @@ def draw_quad1(q):
             p1[i]+=d1[i]
             p2[i]+=d2[i]
 
+draw_quad = draw_quad2
+
 running = 1
 while running:
     dt = clock.tick(60)
@@ -165,6 +228,10 @@ while running:
     for e in pygame.event.get():
         if e.type==pygame.QUIT:
             running = 0
+        if e.type==pygame.KEYDOWN and e.key==pygame.K_1:
+            draw_quad = draw_quad1
+        if e.type==pygame.KEYDOWN and e.key==pygame.K_2:
+            draw_quad = draw_quad2
     keys = pygame.key.get_pressed()
     spd = 5
     if keys[pygame.K_a]:
@@ -181,7 +248,7 @@ while running:
         [trans(quad,y=spd) for quad in quads]
     pygame.depth = odepth[:]
     pygame.surf.fill([0,0,0])
-    [draw_quad1(q) for q in quads]
+    [draw_quad(q) for q in quads]
     print pygame.points
     surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
     pygame.screen.blit(surf,[0,0])
