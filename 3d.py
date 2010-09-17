@@ -1,10 +1,12 @@
 import pygame
 import pygame.gfxdraw
 import psyco
+import numpy
+import math
 
 psyco.full()
 
-s_w,s_h = 100,75
+s_w,s_h = 200,150
 r_w,r_h = 400,300
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
@@ -35,10 +37,31 @@ class Quad:
             self.corners.append(tp)
     def trans(self,p):
         x,y,z,u,v = p
-        z = float((z*1.0/300)+1)
-        x = (x*s_w/float(r_w))/z+s_w//2
-        y = (y*s_w/float(r_w))/z+s_h//2
+        z = float((z*1.0/300.0)+1)
+        d = s_w
+        x = (d*x/float(r_w))/z
+        x+=s_w//2
+        d = s_h
+        y = (d*y/float(r_w))/z
+        y+=s_h//2
         return [x,y,z,u,v]
+    def rot(self,angle):
+        center = [0,0,0]
+        for q in self.points:
+            x,y,z = q[:3]
+            cx,cy,cz = center[:3]
+            theta = angle*math.pi/180.0
+            print angle,theta
+            s,c = math.sin(theta),math.cos(theta)
+            #rotate xy
+            #~ x=x*c-y*s
+            #~ y=x*s+y*c
+            #rotate xz
+            x=x*c-z*s
+            z=x*s+z*c
+            q[0]=x
+            q[1]=y
+            q[2]=z
     def __getitem__(self,k):
         return self.points[k]
 quad = Quad([[0,0,0,0,0],
@@ -63,9 +86,11 @@ quad4 = Quad([[0,0,0,0,0],
             [0,255,0])
 trans(quad4,x=140)
 quads = [quad,quad2,quad3,quad4]
-
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
+
+print quad.points
+print quad.points
 
 def draw_point(x,y,z,u,v,color=None):
     pygame.points += 1
@@ -107,12 +132,15 @@ def draw_line(s,e,color):
         z+=zs
         u+=us
         v+=vs
-        
+
+grey = numpy.array([100,100,100],dtype=numpy.uint8)
 def draw_point2(x,y,z,u,v):
     pygame.points += 1
     if x<0 or x>=s_w:
         return
     if y<0 or y>=s_h:
+        return
+    if z<=0:
         return
     if pygame.depth[y*s_w+x]<z:
         return
@@ -122,8 +150,62 @@ def draw_point2(x,y,z,u,v):
     #~ if v>1: v=1
     #~ if v<0: v=0
     color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
-    #color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
+    #color = numpy.array([int(color[0]*1/z),int(color[1]*1/z),int(color[2]*1/z)],dtype=numpy.uint8)
     pygame.arr[x,y] = color
+    
+def draw_hline(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
+    x,y,z,u,v = x1,y1,z1,u1,v1
+    w = abs(x2-x1)
+    if not w:
+        return
+    dx = (x2-x1)/w
+    dy = 0
+    dz = (z2-z1)/w
+    du = (u2-u1)/w
+    dv = 0
+    while 1:
+        draw_point2(int(x),int(y),z,u,v)
+        x+=dx
+        z+=dz
+        u+=du
+        if x2>x1 and x>x2:
+            break
+        if x2<x1 and x<x2:
+            break
+            
+def draw_tri_bottom(a,b,c):
+    """draw triangle"""
+    y = min([a[1],b[1],c[1]])
+    x,y,z,u,v = a
+    w = abs(b[0]-a[0])
+    va = "x"
+    if w==0:
+        w = abs(b[1]-a[1])
+        va = "y"
+    if w==0:
+        return
+    dx = (b[0]-a[0])/w
+    dy = (b[1]-a[1])/w
+    dz = (b[2]-a[2])/w
+    du = (b[3]-a[3])/w
+    dv = (b[4]-a[4])/w
+    while 1:
+        if va=="x":
+            if dx>0 and x>=b[0]:
+                break
+            if dx<0 and x<=b[0]:
+                break
+        if va=="y":
+            if dy>0 and y>=b[1]:
+                break
+            if dy<0 and y<=b[1]:
+                break
+        draw_line2(x,y,z,u,v,*c)
+        x+=dx
+        y+=dy
+        z+=dz
+        u+=du
+        v+=dv
 
 def draw_line2(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
     x,y,z,u,v = x1,y1,z1,u1,v1
@@ -146,6 +228,39 @@ def draw_line2(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
             break
         if x2<x1 and x<x2:
             break
+            
+def draw_tri2(a,b,c):
+    """draw triangle"""
+    x,y,z,u,v = a
+    w = abs(b[0]-a[0])
+    va = "x"
+    if w==0:
+        w = abs(b[1]-a[1])
+        va = "y"
+    if w==0:
+        return
+    dx = (b[0]-a[0])/w
+    dy = (b[1]-a[1])/w
+    dz = (b[2]-a[2])/w
+    du = (b[3]-a[3])/w
+    dv = (b[4]-a[4])/w
+    while 1:
+        if va=="x":
+            if dx>0 and x>=b[0]:
+                break
+            if dx<0 and x<=b[0]:
+                break
+        if va=="y":
+            if dy>0 and y>=b[1]:
+                break
+            if dy<0 and y<=b[1]:
+                break
+        draw_line2(x,y,z,u,v,*c)
+        x+=dx
+        y+=dy
+        z+=dz
+        u+=du
+        v+=dv
         
 def draw_quad2(q):
     """Draws a quad sample in screen space"""
@@ -154,31 +269,8 @@ def draw_quad2(q):
     ur = q.corners[1]
     br = q.corners[2]
     bl = q.corners[3]
-    #left side and right side moving from top to bottom
-    left = ul
-    right = ur
-    dy = 1
-    w = abs(bl[1]-ul[1])
-    dxl = (bl[0]-ul[0])/w
-    dxr = (ur[0]-br[0])/w
-    dzl = (bl[2]-ul[2])/w
-    dzr = (ur[2]-br[2])/w
-    dul = (bl[3]-ul[3])/w
-    dur = (ur[3]-br[3])/w
-    dvl = (bl[4]-ul[4])/w
-    dvr = (ur[4]-br[4])/w
-    while left[1]<bl[1]:
-        draw_line2(*(left+right))
-        left[0]+=dxl
-        left[1]+=dy
-        left[2]+=dzl
-        left[3]+=dul
-        left[4]+=dvl
-        right[0]+=dxr
-        right[1]+=dy
-        right[2]+=dzr
-        right[3]+=dur
-        right[4]+=dvr
+    draw_tri2(ul,ur,br)
+    draw_tri2(ul,br,bl)
     
 
 def draw_quad1(q):
@@ -211,7 +303,6 @@ def draw_quad1(q):
     az = ((q[0][2]+q[1][2]+q[2][2]+q[3][2])/140.0+2)
     if az<=0:
         return
-    w = 1/az*100
     d1 = [x/w for x in [xw1,yw1,zw1,uw1,vw1]]
     d2 = [x/w for x in [xw2,yw2,zw2,uw2,vw2]]
     p1 = [x1,y1,z1,u1,v1]
@@ -251,6 +342,8 @@ while running:
         [trans(quad,y=-spd) for quad in quads]
     if keys[pygame.K_DOWN]:
         [trans(quad,y=spd) for quad in quads]
+    if keys[pygame.K_r]:
+        [q.rot(5) for q in quads]
     pygame.depth = odepth[:]
     pygame.surf.fill([0,0,0])
     [draw_quad(q) for q in quads]
