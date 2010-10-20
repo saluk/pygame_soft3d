@@ -109,3 +109,23 @@ class Tri:
             q[0]=x+cx
             q[1]=y+cy
             q[2]=z+cz
+
+def scale(q,amt):
+    for p in q.points[:4]:
+        p[0]*=amt
+        p[1]*=amt
+        p[2]*=amt
+            
+import obj
+def load_obj(fn,texarr):
+    quads = []
+    o = obj.OBJ(fn)
+    for points in o.tris:
+        t = Tri(points,[0,0,0],texarr)
+        #scale(t,3)
+        quads.append(t)
+    for points in o.quads:
+        t = Quad(points,[0,0,0],texarr)
+        #scale(t,3)
+        quads.append(t)
+    return quads

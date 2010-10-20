@@ -62,7 +62,7 @@ class OBJ:
             s = [s1,s2,s3]
             if len(face)==4:
                 v4 = self.vertices[face[3]-1]
-                if texcoords:
+                if texcoords and texcoords[0]:
                     uv4 = self.texcoords[texcoords[3]-1]
                 s4 = v4+uv4
                 s+=[s4]

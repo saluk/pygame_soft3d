@@ -1,3 +1,4 @@
+import os
 import pygame
 import pygame.gfxdraw
 import psyco
@@ -90,15 +91,10 @@ trans(quad4,x=140)
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
 
-quads = []
-import obj
-man = obj.OBJ("tea.obj")
-for points in man.tris:
-    t = Tri(points,[0,0,0],texarr)
-    quads.append(t)
-for points in man.quads:
-    t = Quad(points,[0,0,0],texarr)
-    quads.append(t)
+objects = []
+for fn in os.listdir("."):
+    if fn.endswith(".obj"):
+        objects.append(load_obj(fn,texarr))
 
 def draw_point(x,y,z,u,v,texture):
     #pygame.points += 1
@@ -259,6 +255,7 @@ def draw_quad(q):
 def main():
     next_update = 1
     running = 1
+    quads = objects[0]
     while running:
         dt = clock.tick(200)
         pygame.display.set_caption("%s"%clock.get_fps())
@@ -270,6 +267,16 @@ def main():
                 #~ draw_line3 = draw_line3_inline
             #~ if e.type==pygame.KEYDOWN and e.key==pygame.K_2:
                 #~ draw_line3 = draw_line3_func
+            if e.type==pygame.KEYDOWN and e.key==pygame.K_PERIOD:
+                i = objects.index(quads)-1
+                if i<0:
+                    i = len(objects)-1
+                quads = objects[i]
+            if e.type==pygame.KEYDOWN and e.key==pygame.K_COMMA:
+                i = objects.index(quads)+1
+                if i>=len(objects):
+                    i = 0
+                quads = objects[i]
         keys = pygame.key.get_pressed()
         spd = 5
         if keys[pygame.K_a]:
