@@ -111,7 +111,7 @@ def draw_point(x,y,z,u,v,texture):
     if pygame.depth[y*s_w+x]<z:
         return
     pygame.depth[y*s_w+x] = z
-    pygame.arr[x,y] = texture[int(z*10)][int(u%1*tw),int(v%1*th)]
+    pygame.arr[x,y] = texture[int(z*30)][int(u%1*tw),int(v%1*th)]
         
 def draw_tri(a,b,c,texture):
     """draws triangle with horizontal lines"""
