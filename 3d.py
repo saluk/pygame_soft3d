@@ -230,7 +230,8 @@ def draw_line2(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
             break
             
 def draw_tri2(a,b,c):
-    """draw triangle"""
+    """draw triangle with diagonal lines from one point to
+    the two other points"""
     x,y,z,u,v = a
     w = abs(b[0]-a[0])
     va = "x"
@@ -262,6 +263,98 @@ def draw_tri2(a,b,c):
         u+=du
         v+=dv
         
+def draw_tri3(a,b,c):
+    """draws triangle with horizontal lines"""
+    #Sort points vertically
+    a,b,c = sorted([a,b,c],key=lambda t: t[1])
+    #upside down triangle with flat top
+    if a[1]==b[1]:
+        draw_tri_point_down(a,b,c)
+    #triangle with flat bottom
+    if b[1]==c[1]:
+        draw_tri_point_up(a,b,c)
+    #triangle should be split
+
+def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
+    """horizontal"""
+    x,y,z,u,v = x1,y1,z1,u1,v1
+    w = abs(x2-x1)
+    if not w:
+        return
+    dx = 1
+    dy = 0
+    dz = (z2-z1)/w
+    du = (u2-u1)/w
+    dv = (v2-v1)/w
+    while x<=x2:
+        draw_point2(int(x),int(y),z,u,v)
+        x+=dx
+        y+=dy
+        z+=dz
+        u+=du
+        v+=dv
+
+def draw_tri_point_up(a,b,c):
+    """flat bottom"""
+    b,c = sorted([b,c],key=lambda t: t[0])
+    x,y,z,u,v = a
+    ex,ey,ez,eu,ev = a
+    if c[0]<b[0]:
+        b,c = c,b
+    ydist = float(b[1]-y)
+    dx1 = (b[0]-x)/ydist
+    dx2 = (c[0]-ex)/ydist
+    dy1 = 1
+    dy2 = 1
+    dz1 = (b[2]-z)/ydist
+    dz2 = (c[2]-ez)/ydist
+    du1 = (b[3]-u)/ydist
+    du2 = (c[3]-eu)/ydist
+    dv1 = (b[4]-v)/ydist
+    dv2 = (c[4]-ev)/ydist
+    while y<=b[1]:
+        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev)
+        x+=dx1
+        y+=dy1
+        z+=dz1
+        u+=du1
+        v+=dv1
+        ex+=dx2
+        ey+=dy2
+        ez+=dz2
+        eu+=du2
+        ev+=dv2
+
+def draw_tri_point_down(a,b,c):
+    """flat top"""
+    if b[0]<a[0]:
+        b,a = a,b
+    x,y,z,u,v = a
+    ex,ey,ez,eu,ev = b
+    ydist = float(c[1]-y)
+    dx1 = (c[0]-x)/ydist
+    dx2 = (c[0]-ex)/ydist
+    dy1 = 1
+    dy2 = 1
+    dz1 = (c[2]-z)/ydist
+    dz2 = (c[2]-ez)/ydist
+    du1 = (c[3]-u)/ydist
+    du2 = (c[3]-eu)/ydist
+    dv1 = (c[4]-v)/ydist
+    dv2 = (c[4]-ev)/ydist
+    while y<=c[1]:
+        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev)
+        x+=dx1
+        y+=dy1
+        z+=dz1
+        u+=du1
+        v+=dv1
+        ex+=dx2
+        ey+=dy2
+        ez+=dz2
+        eu+=du2
+        ev+=dv2
+        
 def draw_quad2(q):
     """Draws a quad sample in screen space"""
     q.calc_corners()
@@ -269,8 +362,8 @@ def draw_quad2(q):
     ur = q.corners[1]
     br = q.corners[2]
     bl = q.corners[3]
-    draw_tri2(ul,ur,br)
-    draw_tri2(ul,br,bl)
+    draw_tri3(ul,ur,br)
+    draw_tri3(ul,br,bl)
     
 
 def draw_quad1(q):
