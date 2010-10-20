@@ -6,7 +6,7 @@ import math
 
 psyco.full()
 
-s_w,s_h = 200,150
+s_w,s_h = 150,100
 r_w,r_h = 400,300
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
@@ -276,6 +276,11 @@ def draw_tri3(a,b,c):
         draw_tri_point_up(a,b,c)
         return
     #triangle should be split
+    else:
+        draw_tri_split(a,b,c)
+        
+def draw_tri_split(a,b,c):
+    """Split a rotated triangle into an upward and downward pointing one"""
     d = [0,b[1],0,0,0]
     if c[0]==a[0]:
         d[0] = c[0]
@@ -438,6 +443,8 @@ def draw_quad1(q):
 
 draw_quad = draw_quad2
 
+next_update = 1
+
 running = 1
 while running:
     dt = clock.tick(60)
@@ -466,10 +473,13 @@ while running:
         [trans(quad,y=spd) for quad in quads]
     if keys[pygame.K_r]:
         [q.rot(5) for q in quads]
-    pygame.depth = odepth[:]
-    pygame.surf.fill([0,0,0])
-    [draw_quad(q) for q in quads]
-    print pygame.points
-    surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
-    pygame.screen.blit(surf,[0,0])
+    if next_update<0:
+        print pygame.points
+        next_update = 60
+        pygame.depth = odepth[:]
+        pygame.surf.fill([0,0,0])
+        [draw_quad(q) for q in quads]
+        surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
+        pygame.screen.blit(surf,[0,0])
+    next_update -= dt
     pygame.display.flip()
