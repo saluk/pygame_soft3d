@@ -3,6 +3,7 @@ import pygame.gfxdraw
 import psyco
 import numpy
 import math
+import random
 
 psyco.full()
 
@@ -13,10 +14,26 @@ clock = pygame.time.Clock()
 pygame.surf = pygame.Surface([s_w,s_h])
 pygame.arr = pygame.surfarray.pixels3d(pygame.surf)
 
-tex = pygame.image.load("bm.bmp").convert()
-texarr = pygame.surfarray.pixels3d(tex)
-tex2 = pygame.image.load("bm2.bmp").convert()
-texarr2 = pygame.surfarray.pixels3d(tex2)
+def load_tex(img):
+    tex = pygame.image.load(img)
+    
+    texarr = []
+    mem = []
+    alpha = 255
+    for z in range(50):
+        blank = tex.convert()
+        blank.fill([0,0,0])
+        tex.set_alpha(alpha)
+        blank.blit(tex,[0,0])
+        alpha = int(0.95*alpha)
+        arr = pygame.surfarray.pixels3d(blank)
+        texarr.append(arr)
+        mem.append(blank)
+    tw = tex.get_width()-1
+    th = tex.get_height()-1
+    return texarr,mem,tw,th
+    
+texarr,mem,tw,th = load_tex("bm.bmp")
 
 def trans(q,x=0,y=0,z=0):
     for p in q[:4]:
@@ -115,7 +132,7 @@ def draw_point(x,y,z,u,v,color=None):
         return
     pygame.depth[y*s_w+x] = z
     if not color:
-        color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
+        color = arr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
         #~ color = [int(color[0]/z),int(color[1]/z),int(color[2]/z)]
     pygame.arr[x,y] = color
 
@@ -148,12 +165,15 @@ def draw_point2(x,y,z,u,v,texture):
     if pygame.depth[y*s_w+x]<z:
         return
     pygame.depth[y*s_w+x] = z
-    #~ if u>1: u=1
-    #~ if u<0: u=0
-    #~ if v>1: v=1
-    #~ if v<0: v=0
-    color = texture[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
-    #color = numpy.array([int(color[0]*1/z),int(color[1]*1/z),int(color[2]*1/z)],dtype=numpy.uint8)
+    #~ u+=random.random()*z/100.0
+    #~ v+=random.random()*z/100.0
+    #~ if u>1: u-=1
+    #~ if u<0: u+=1
+    #~ if v>1: v-=1
+    #~ if v<0: v+=1
+    #~ z = max(1,int(z))
+    #~ z = min(4,z)
+    color = texture[int(z*10)][int(u*tw),int(v*th)]
     pygame.arr[x,y] = color
     
 def draw_hline(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
@@ -311,7 +331,7 @@ def draw_tri_split(a,b,c,texture):
         d[4] = (d[1]-i)/m
     draw_tri_point_up(a,b,d,texture)
     draw_tri_point_down(b,d,c,texture)
-
+    
 def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     """horizontal"""
     x,y,z,u,v = x1,y1,z1,u1,v1
@@ -323,7 +343,7 @@ def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     dz = (z2-z1)/w
     du = (u2-u1)/w
     dv = (v2-v1)/w
-    while x<=x2:
+    while x<x2:
         draw_point2(int(x),int(y),z,u,v,texture)
         x+=dx
         y+=dy
@@ -444,45 +464,48 @@ def draw_quad1(q):
             p1[i]+=d1[i]
             p2[i]+=d2[i]
 
-draw_quad = draw_quad2
+def main():
+    next_update = 1
+    draw_quad = draw_quad2
+    running = 1
+    while running:
+        dt = clock.tick()
+        pygame.display.set_caption("%s"%clock.get_fps())
+        pygame.points = 0
+        for e in pygame.event.get():
+            if e.type==pygame.QUIT:
+                running = 0
+            #~ if e.type==pygame.KEYDOWN and e.key==pygame.K_1:
+                #~ draw_line3 = draw_line3_inline
+            #~ if e.type==pygame.KEYDOWN and e.key==pygame.K_2:
+                #~ draw_line3 = draw_line3_func
+        keys = pygame.key.get_pressed()
+        spd = 5
+        if keys[pygame.K_a]:
+            [trans(quad,z=-spd) for quad in quads]
+        if keys[pygame.K_z]:
+            [trans(quad,z=spd) for quad in quads]
+        if keys[pygame.K_LEFT]:
+            [trans(quad,x=-spd) for quad in quads]
+        if keys[pygame.K_RIGHT]:
+            [trans(quad,x=spd) for quad in quads]
+        if keys[pygame.K_UP]:
+            [trans(quad,y=-spd) for quad in quads]
+        if keys[pygame.K_DOWN]:
+            [trans(quad,y=spd) for quad in quads]
+        if keys[pygame.K_r]:
+            [q.rot(5) for q in quads]
+        if next_update<0:
+            print pygame.points
+            next_update = 0
+            pygame.depth = odepth[:]
+            pygame.surf.fill([0,0,0])
+            [draw_quad(q) for q in quads]
+            surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
+            pygame.screen.blit(surf,[0,0])
+        next_update -= dt
+        pygame.display.flip()
 
-next_update = 1
-
-running = 1
-while running:
-    dt = clock.tick(60)
-    pygame.display.set_caption("%s"%clock.get_fps())
-    pygame.points = 0
-    for e in pygame.event.get():
-        if e.type==pygame.QUIT:
-            running = 0
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_1:
-            draw_quad = draw_quad1
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_2:
-            draw_quad = draw_quad2
-    keys = pygame.key.get_pressed()
-    spd = 5
-    if keys[pygame.K_a]:
-        [trans(quad,z=-spd) for quad in quads]
-    if keys[pygame.K_z]:
-        [trans(quad,z=spd) for quad in quads]
-    if keys[pygame.K_LEFT]:
-        [trans(quad,x=-spd) for quad in quads]
-    if keys[pygame.K_RIGHT]:
-        [trans(quad,x=spd) for quad in quads]
-    if keys[pygame.K_UP]:
-        [trans(quad,y=-spd) for quad in quads]
-    if keys[pygame.K_DOWN]:
-        [trans(quad,y=spd) for quad in quads]
-    if keys[pygame.K_r]:
-        [q.rot(5) for q in quads]
-    if next_update<0:
-        print pygame.points
-        next_update = 60
-        pygame.depth = odepth[:]
-        pygame.surf.fill([0,0,0])
-        [draw_quad(q) for q in quads]
-        surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
-        pygame.screen.blit(surf,[0,0])
-    next_update -= dt
-    pygame.display.flip()
+#~ import cProfile as profile
+#~ profile.run("main()")
+main()
