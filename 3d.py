@@ -12,7 +12,7 @@ r_w,r_h = 400,300
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 pygame.surf = pygame.Surface([s_w,s_h])
-pygame.arr = pygame.surfarray.pixels3d(pygame.surf)
+pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
 
 def load_tex(img):
     tex = pygame.image.load(img)
@@ -26,7 +26,7 @@ def load_tex(img):
         tex.set_alpha(alpha)
         blank.blit(tex,[0,0])
         alpha = int(0.96*alpha)
-        arr = pygame.surfarray.pixels3d(blank)
+        arr = pygame.surfarray.pixels2d(blank)
         texarr.append(arr)
         mem.append(blank)
     tw = tex.get_width()-1
@@ -169,7 +169,7 @@ def draw_line(s,e,color):
 
 grey = numpy.array([100,100,100],dtype=numpy.uint8)
 def draw_point2(x,y,z,u,v,texture):
-    pygame.points += 1
+    #pygame.points += 1
     if x<0 or x>=s_w:
         return
     if y<0 or y>=s_h:
@@ -179,16 +179,7 @@ def draw_point2(x,y,z,u,v,texture):
     if pygame.depth[y*s_w+x]<z:
         return
     pygame.depth[y*s_w+x] = z
-    #~ u+=random.random()*z/100.0
-    #~ v+=random.random()*z/100.0
-    #~ if u>1: u-=1
-    #~ if u<0: u+=1
-    #~ if v>1: v-=1
-    #~ if v<0: v+=1
-    #~ z = max(1,int(z))
-    #~ z = min(4,z)
-    color = texture[int(z*10)][int(u%1*tw),int(v%1*th)]
-    pygame.arr[x,y] = color
+    pygame.arr[x,y] = texture[int(z*10)][int(u%1*tw),int(v%1*th)]
     
 def draw_hline(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
     x,y,z,u,v = x1,y1,z1,u1,v1
