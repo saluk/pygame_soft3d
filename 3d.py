@@ -15,6 +15,8 @@ pygame.arr = pygame.surfarray.pixels3d(pygame.surf)
 
 tex = pygame.image.load("bm.bmp").convert()
 texarr = pygame.surfarray.pixels3d(tex)
+tex2 = pygame.image.load("bm2.bmp").convert()
+texarr2 = pygame.surfarray.pixels3d(tex2)
 
 def trans(q,x=0,y=0,z=0):
     for p in q[:4]:
@@ -26,9 +28,10 @@ def push(q,z=0):
     q[3][2]+=z
 
 class Quad:
-    def __init__(self,points,color):
+    def __init__(self,points,color,texture=texarr):
         self.points = points
         self.color = color
+        self.texture = texture
         self.calc_corners()
     def calc_corners(self):
         self.corners = []
@@ -83,7 +86,8 @@ quad4 = Quad([[0,0,0,0,0],
             [0,0,140,1,0],
             [0,140,140,1,1],
             [0,140,0,0,1]],
-            [0,255,0])
+            [0,255,0],
+            texarr2)
 trans(quad4,x=140)
 quads = [quad,quad2,quad3,quad4]
 odepth = [1000 for i in range(s_w*s_h)]
@@ -134,7 +138,7 @@ def draw_line(s,e,color):
         v+=vs
 
 grey = numpy.array([100,100,100],dtype=numpy.uint8)
-def draw_point2(x,y,z,u,v):
+def draw_point2(x,y,z,u,v,texture):
     pygame.points += 1
     if x<0 or x>=s_w:
         return
@@ -149,7 +153,7 @@ def draw_point2(x,y,z,u,v):
     #~ if u<0: u=0
     #~ if v>1: v=1
     #~ if v<0: v=0
-    color = texarr[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
+    color = texture[int(u*(tex.get_width()-1)),int(v*(tex.get_height()-1))]
     #color = numpy.array([int(color[0]*1/z),int(color[1]*1/z),int(color[2]*1/z)],dtype=numpy.uint8)
     pygame.arr[x,y] = color
     
@@ -263,23 +267,23 @@ def draw_tri2(a,b,c):
         u+=du
         v+=dv
         
-def draw_tri3(a,b,c):
+def draw_tri3(a,b,c,texture):
     """draws triangle with horizontal lines"""
     #Sort points vertically
     a,b,c = sorted([a,b,c],key=lambda t: t[1])
     #upside down triangle with flat top
     if a[1]==b[1]:
-        draw_tri_point_down(a,b,c)
+        draw_tri_point_down(a,b,c,texture)
         return
     #triangle with flat bottom
     if b[1]==c[1]:
-        draw_tri_point_up(a,b,c)
+        draw_tri_point_up(a,b,c,texture)
         return
     #triangle should be split
     else:
-        draw_tri_split(a,b,c)
+        draw_tri_split(a,b,c,texture)
         
-def draw_tri_split(a,b,c):
+def draw_tri_split(a,b,c,texture):
     """Split a rotated triangle into an upward and downward pointing one"""
     d = [0,b[1],0,0,0]
     if c[0]==a[0]:
@@ -306,10 +310,10 @@ def draw_tri_split(a,b,c):
         m = (c[1]-a[1])/(c[4]-a[4])
         i=a[1]-m*a[4]
         d[4] = (d[1]-i)/m
-    draw_tri_point_up(a,b,d)
-    draw_tri_point_down(b,d,c)
+    draw_tri_point_up(a,b,d,texture)
+    draw_tri_point_down(b,d,c,texture)
 
-def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
+def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     """horizontal"""
     x,y,z,u,v = x1,y1,z1,u1,v1
     w = abs(x2-x1)
@@ -321,14 +325,14 @@ def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
     du = (u2-u1)/w
     dv = (v2-v1)/w
     while x<=x2:
-        draw_point2(int(x),int(y),z,u,v)
+        draw_point2(int(x),int(y),z,u,v,texture)
         x+=dx
         y+=dy
         z+=dz
         u+=du
         v+=dv
 
-def draw_tri_point_up(a,b,c):
+def draw_tri_point_up(a,b,c,texture):
     """flat bottom"""
     b,c = sorted([b,c],key=lambda t: t[0])
     x,y,z,u,v = a
@@ -347,7 +351,7 @@ def draw_tri_point_up(a,b,c):
     dv1 = (b[4]-v)/ydist
     dv2 = (c[4]-ev)/ydist
     while y<=b[1]:
-        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev)
+        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev,texture)
         x+=dx1
         y+=dy1
         z+=dz1
@@ -359,7 +363,7 @@ def draw_tri_point_up(a,b,c):
         eu+=du2
         ev+=dv2
 
-def draw_tri_point_down(a,b,c):
+def draw_tri_point_down(a,b,c,texture):
     """flat top"""
     if b[0]<a[0]:
         b,a = a,b
@@ -377,7 +381,7 @@ def draw_tri_point_down(a,b,c):
     dv1 = (c[4]-v)/ydist
     dv2 = (c[4]-ev)/ydist
     while y<=c[1]:
-        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev)
+        draw_line3(x,y,z,u,v,ex,ey,ez,eu,ev,texture)
         x+=dx1
         y+=dy1
         z+=dz1
@@ -396,8 +400,8 @@ def draw_quad2(q):
     ur = q.corners[1]
     br = q.corners[2]
     bl = q.corners[3]
-    draw_tri3(ul,ur,br)
-    draw_tri3(ul,br,bl)
+    draw_tri3(ul,ur,br,q.texture)
+    draw_tri3(ul,br,bl,q.texture)
     
 
 def draw_quad1(q):
