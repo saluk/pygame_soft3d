@@ -86,9 +86,19 @@ tri = Tri([[-50,0,0,0,0],
             [0,255,0],
             texarr2)
 trans(quad4,x=140)
-quads = [quad,quad2,quad3,quad4,tri]
+#quads = [quad,quad2,quad3,quad4,tri]
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
+
+quads = []
+import obj
+man = obj.OBJ("tea.obj")
+for points in man.tris:
+    t = Tri(points,[0,0,0],texarr)
+    quads.append(t)
+for points in man.quads:
+    t = Quad(points,[0,0,0],texarr)
+    quads.append(t)
 
 def draw_point(x,y,z,u,v,texture):
     #pygame.points += 1
