@@ -25,7 +25,7 @@ def load_tex(img):
         blank.fill([0,0,0])
         tex.set_alpha(alpha)
         blank.blit(tex,[0,0])
-        alpha = int(0.95*alpha)
+        alpha = int(0.96*alpha)
         arr = pygame.surfarray.pixels3d(blank)
         texarr.append(arr)
         mem.append(blank)
@@ -58,6 +58,8 @@ class Quad:
     def trans(self,p):
         x,y,z,u,v = p
         z = float((z*1.0/300.0)+1)
+        if z==0:
+            z=0.1
         d = s_w
         x = (d*x/float(r_w))/z
         x+=s_w//2
@@ -108,9 +110,6 @@ trans(quad4,x=140)
 quads = [quad,quad2,quad3,quad4]
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
-
-print quad.points
-print quad.points
 
 def draw_point(x,y,z,u,v,color=None):
     pygame.points += 1
@@ -338,13 +337,18 @@ def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     w = abs(x2-x1)
     if not w:
         return
+    if y<0 or y>=s_h:
+        return
     dx = 1
     dy = 0
     dz = (z2-z1)/w
     du = (u2-u1)/w
     dv = (v2-v1)/w
     while x<x2:
-        draw_point2(int(x),int(y),z,u,v,texture)
+        if x>=s_w:
+            return
+        if x>=0:
+            draw_point2(int(x),int(y),z,u,v,texture)
         x+=dx
         y+=dy
         z+=dz
@@ -469,7 +473,7 @@ def main():
     draw_quad = draw_quad2
     running = 1
     while running:
-        dt = clock.tick()
+        dt = clock.tick(60)
         pygame.display.set_caption("%s"%clock.get_fps())
         pygame.points = 0
         for e in pygame.event.get():
@@ -496,8 +500,7 @@ def main():
         if keys[pygame.K_r]:
             [q.rot(5) for q in quads]
         if next_update<0:
-            print pygame.points
-            next_update = 0
+            next_update = 60
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             [draw_quad(q) for q in quads]
