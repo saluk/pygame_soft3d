@@ -5,14 +5,21 @@ import numpy
 import math
 import random
 
+
 psyco.full()
 
 s_w,s_h = 150,100
 r_w,r_h = 400,300
+pygame.s_w = s_w
+pygame.s_h = s_h
+pygame.r_w = r_w
+pygame.r_h = r_h
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 pygame.surf = pygame.Surface([s_w,s_h])
 pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
+
+from models import *
 
 def load_tex(img):
     tex = pygame.image.load(img)
@@ -36,91 +43,42 @@ def load_tex(img):
 texarr,mem,tw,th = load_tex("bm.bmp")
 
 def trans(q,x=0,y=0,z=0):
-    for p in q[:4]:
+    for p in q.points[:4]:
         p[0]+=x
         p[1]+=y
         p[2]+=z
 def push(q,z=0):
-    q[0][2]+=z
-    q[3][2]+=z
+    q.points[0][2]+=z
+    q.points[3][2]+=z
 def uvscroll(q,u=0,v=0):
-    for p in q[:4]:
+    for p in q.points[:4]:
         p[3]+=u
         p[4]+=v
 
-class Quad:
-    def __init__(self,points,color,texture=texarr):
-        self.points = points
-        self.color = color
-        self.texture = texture
-        self.calc_corners()
-    def calc_corners(self):
-        self.corners = []
-        for p in self.points:
-            tp = self.trans(p)
-            self.corners.append(tp)
-    def trans(self,p):
-        x,y,z,u,v = p
-        z = float((z*1.0/300.0)+1)
-        if z==0:
-            z=0.1
-        d = s_w
-        x = (d*x/float(r_w))/z
-        x+=s_w//2
-        d = s_h
-        y = (d*y/float(r_w))/z
-        y+=s_h//2
-        return [x,y,z,u,v]
-    def rot(self,rx=0,ry=0,rz=0,center=[0,0,0]):
-        for q in self.points:
-            x,y,z = q[:3]
-            cx,cy,cz = center[:3]
-            x=x-cx
-            y=y-cy
-            z=z-cz
-            if rx:
-                theta = rx*math.pi/180.0
-                s,c = math.sin(theta),math.cos(theta)
-                y = y*c-z*s
-                z = y*s+z*c
-                x = x
-            if ry:
-                theta = ry*math.pi/180.0
-                s,c = math.sin(theta),math.cos(theta)
-                z = z*c-x*s
-                x = z*s+x*c
-                y = y
-            if rz:
-                theta = rz*math.pi/180.0
-                s,c = math.sin(theta),math.cos(theta)
-                x = x*c-y*s
-                y = x*s+y*c
-                z = z
-            q[0]=x+cx
-            q[1]=y+cy
-            q[2]=z+cz
-    def __getitem__(self,k):
-        return self.points[k]
 quad = Quad([[0,0,0,0,0],
             [140,0,0,1,0],
             [140,140,0,1,1],
             [0,140,0,0,1]],
-            [255,255,255])
+            [255,255,255],
+            texarr)
 quad2 = Quad([[0,0,140,0,0],
             [140,0,140,1,0],
             [140,140,140,1,1],
             [0,140,140,0,1]],
-            [255,0,0])
+            [255,0,0],
+            texarr)
 quad3 = Quad([[0,0,0,0,0],
             [0,0,140,1,0],
             [0,140,140,1,1],
             [0,140,0,0,1]],
-            [0,255,0])
+            [0,255,0],
+            texarr)
 quad4 = Quad([[0,0,0,0,0],
             [0,0,140,1,0],
             [0,140,140,1,1],
             [0,140,0,0,1]],
-            [0,255,0])
+            [0,255,0],
+            texarr)
 trans(quad4,x=140)
 quads = [quad,quad2,quad3,quad4]
 odepth = [1000 for i in range(s_w*s_h)]
@@ -309,16 +267,16 @@ def main():
         if keys[pygame.K_DOWN]:
             [trans(quad,y=spd) for quad in quads]
         if keys[pygame.K_r]:
-            [q.rot(ry=1,center=quads[0][0]) for q in quads]
+            [q.rot(ry=1,center=quads[0].points[0]) for q in quads]
         if keys[pygame.K_t]:
-            [q.rot(rx=1,center=quads[0][0]) for q in quads]
+            [q.rot(rx=1,center=quads[0].points[0]) for q in quads]
         if keys[pygame.K_y]:
-            [q.rot(rz=1,center=quads[0][0]) for q in quads]
+            [q.rot(rz=1,center=quads[0].points[0]) for q in quads]
         if keys[pygame.K_f]:
-            [q.rot(-1,center=quads[0][0]) for q in quads]
+            [q.rot(-1,center=quads[0].points[0]) for q in quads]
         uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
-            [quad.calc_corners() for quad in quads]
+            #[quad.calc_corners() for quad in quads]
             next_update = 0#100
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
