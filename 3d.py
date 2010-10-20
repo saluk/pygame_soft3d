@@ -4,7 +4,6 @@ import psyco
 import numpy
 import math
 import random
-import euclid
 
 psyco.full()
 
@@ -72,22 +71,34 @@ class Quad:
         y = (d*y/float(r_w))/z
         y+=s_h//2
         return [x,y,z,u,v]
-    def rot(self,angle,center=[0,0,0]):
-        r = euclid.Matrix4().rotate_euler(0,angle*math.pi/180.0,0)
+    def rot(self,rx=0,ry=0,rz=0,center=[0,0,0]):
         for q in self.points:
             x,y,z = q[:3]
             cx,cy,cz = center[:3]
             x=x-cx
             y=y-cy
             z=z-cz
-            theta = angle*math.pi/180.0
-            s,c = math.sin(theta),math.cos(theta)
-            zp = z*c-x*s
-            xp = z*s+x*c
-            yp = y
-            q[0]=xp+cx
-            q[1]=yp+cy
-            q[2]=zp+cz
+            if rx:
+                theta = rx*math.pi/180.0
+                s,c = math.sin(theta),math.cos(theta)
+                y = y*c-z*s
+                z = y*s+z*c
+                x = x
+            if ry:
+                theta = ry*math.pi/180.0
+                s,c = math.sin(theta),math.cos(theta)
+                z = z*c-x*s
+                x = z*s+x*c
+                y = y
+            if rz:
+                theta = rz*math.pi/180.0
+                s,c = math.sin(theta),math.cos(theta)
+                x = x*c-y*s
+                y = x*s+y*c
+                z = z
+            q[0]=x+cx
+            q[1]=y+cy
+            q[2]=z+cz
     def __getitem__(self,k):
         return self.points[k]
 quad = Quad([[0,0,0,0,0],
@@ -502,13 +513,17 @@ def main():
         if keys[pygame.K_DOWN]:
             [trans(quad,y=spd) for quad in quads]
         if keys[pygame.K_r]:
-            [q.rot(1,center=quads[0][0]) for q in quads]
+            [q.rot(ry=1,center=quads[0][0]) for q in quads]
+        if keys[pygame.K_t]:
+            [q.rot(rx=1,center=quads[0][0]) for q in quads]
+        if keys[pygame.K_y]:
+            [q.rot(rz=1,center=quads[0][0]) for q in quads]
         if keys[pygame.K_f]:
             [q.rot(-1,center=quads[0][0]) for q in quads]
         uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
             [quad.calc_corners() for quad in quads]
-            next_update = 100
+            next_update = 0#100
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             [draw_quad(q) for q in quads]
