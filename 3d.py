@@ -86,8 +86,7 @@ quad4 = Quad([[0,0,0,0,0],
             [0,0,140,1,0],
             [0,140,140,1,1],
             [0,140,0,0,1]],
-            [0,255,0],
-            texarr2)
+            [0,255,0])
 trans(quad4,x=140)
 quads = [quad,quad2,quad3,quad4]
 odepth = [1000 for i in range(s_w*s_h)]
@@ -319,15 +318,13 @@ def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     w = abs(x2-x1)
     if not w:
         return
-    dx = 1
     dy = 0
     dz = (z2-z1)/w
     du = (u2-u1)/w
     dv = (v2-v1)/w
     while x<=x2:
         draw_point2(int(x),int(y),z,u,v,texture)
-        x+=dx
-        y+=dy
+        x+=1
         z+=dz
         u+=du
         v+=dv
