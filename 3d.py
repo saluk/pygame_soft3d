@@ -270,10 +270,39 @@ def draw_tri3(a,b,c):
     #upside down triangle with flat top
     if a[1]==b[1]:
         draw_tri_point_down(a,b,c)
+        return
     #triangle with flat bottom
     if b[1]==c[1]:
         draw_tri_point_up(a,b,c)
+        return
     #triangle should be split
+    d = [0,b[1],0,0,0]
+    if c[0]==a[0]:
+        d[0] = c[0]
+    else:
+        m = (c[1]-a[1])/(c[0]-a[0])
+        i=a[1]-m*a[0]
+        d[0] = (d[1]-i)/m
+    if c[2]==a[2]:
+        d[2] = c[2]
+    else:
+        m = (c[1]-a[1])/(c[2]-a[2])
+        i=a[1]-m*a[2]
+        d[2] = (d[1]-i)/m
+    if c[3]==a[3]:
+        d[3] = c[3]
+    else:
+        m = (c[1]-a[1])/(c[3]-a[3])
+        i=a[1]-m*a[3]
+        d[3] = (d[1]-i)/m
+    if c[4]==a[4]:
+        d[4] = c[4]
+    else:
+        m = (c[1]-a[1])/(c[4]-a[4])
+        i=a[1]-m*a[4]
+        d[4] = (d[1]-i)/m
+    draw_tri_point_up(a,b,d)
+    draw_tri_point_down(b,d,c)
 
 def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
     """horizontal"""
