@@ -33,14 +33,15 @@ def load_tex(img):
         tex.set_alpha(alpha)
         blank.blit(tex,[0,0])
         alpha = int(0.96*alpha)
-        arr = pygame.surfarray.pixels2d(blank)
+        arr = pygame.surfarray.array2d(blank)
         texarr.append(arr)
         mem.append(blank)
     tw = tex.get_width()-1
     th = tex.get_height()-1
-    return texarr,mem,tw,th
+    return texarr,tw,th
     
-texarr,mem,tw,th = load_tex("bm.bmp")
+texarr,tw,th = load_tex("bm.bmp")
+texarr2,tw,th = load_tex("bm2.bmp")
 
 def trans(q,x=0,y=0,z=0):
     for p in q.points[:4]:
@@ -79,8 +80,13 @@ quad4 = Quad([[0,0,0,0,0],
             [0,140,0,0,1]],
             [0,255,0],
             texarr)
+tri = Tri([[-50,0,0,0,0],
+            [-50,0,140,1,0],
+            [-50,140,140,1,1]],
+            [0,255,0],
+            texarr2)
 trans(quad4,x=140)
-quads = [quad,quad2,quad3,quad4]
+quads = [quad,quad2,quad3,quad4,tri]
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
 
@@ -231,6 +237,8 @@ def draw_tri_point_down(a,b,c,texture):
 def draw_quad(q):
     """Draws a quad sample in screen space"""
     q.calc_corners()
+    if isinstance(q,Tri):
+        return draw_tri(q.corners[0],q.corners[1],q.corners[2],q.texture)
     ul = q.corners[0]
     ur = q.corners[1]
     br = q.corners[2]
