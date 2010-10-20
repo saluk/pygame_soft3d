@@ -318,13 +318,15 @@ def draw_line3(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2,texture):
     w = abs(x2-x1)
     if not w:
         return
+    dx = 1
     dy = 0
     dz = (z2-z1)/w
     du = (u2-u1)/w
     dv = (v2-v1)/w
     while x<=x2:
         draw_point2(int(x),int(y),z,u,v,texture)
-        x+=1
+        x+=dx
+        y+=dy
         z+=dz
         u+=du
         v+=dv
