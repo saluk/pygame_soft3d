@@ -43,6 +43,10 @@ def trans(q,x=0,y=0,z=0):
 def push(q,z=0):
     q[0][2]+=z
     q[3][2]+=z
+def uvscroll(q,u=0,v=0):
+    for p in q[:4]:
+        p[3]+=u
+        p[4]+=v
 
 class Quad:
     def __init__(self,points,color,texture=texarr):
@@ -172,7 +176,7 @@ def draw_point2(x,y,z,u,v,texture):
     #~ if v<0: v+=1
     #~ z = max(1,int(z))
     #~ z = min(4,z)
-    color = texture[int(z*10)][int(u*tw),int(v*th)]
+    color = texture[int(z*10)][int(u%1*tw),int(v%1*th)]
     pygame.arr[x,y] = color
     
 def draw_hline(x1,y1,z1,u1,v1,x2,y2,z2,u2,v2):
@@ -473,7 +477,7 @@ def main():
     draw_quad = draw_quad2
     running = 1
     while running:
-        dt = clock.tick(60)
+        dt = clock.tick(200)
         pygame.display.set_caption("%s"%clock.get_fps())
         pygame.points = 0
         for e in pygame.event.get():
@@ -499,8 +503,12 @@ def main():
             [trans(quad,y=spd) for quad in quads]
         if keys[pygame.K_r]:
             [q.rot(5) for q in quads]
+        if keys[pygame.K_f]:
+            [q.rot(-5) for q in quads]
+        uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
-            next_update = 60
+            [quad.calc_corners() for quad in quads]
+            next_update = 100
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             [draw_quad(q) for q in quads]
