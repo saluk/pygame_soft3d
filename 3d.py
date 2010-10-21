@@ -28,12 +28,12 @@ def load_tex(img):
     texarr = []
     mem = []
     alpha = 255
-    for z in range(50):
+    for z in range(10):
         blank = tex.convert()
         blank.fill([0,0,0])
         tex.set_alpha(alpha)
         blank.blit(tex,[0,0])
-        alpha = int(0.96*alpha)
+        alpha = int(0.5*alpha)
         arr = pygame.surfarray.array2d(blank)
         texarr.append(arr)
         mem.append(blank)
@@ -277,6 +277,7 @@ def main():
             next_update = 0#100
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
+            pygame.points = 0
             [draw_quad(q) for q in quads]
             surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
             pygame.screen.blit(surf,[0,0])
