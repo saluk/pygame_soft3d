@@ -1,13 +1,37 @@
 import pygame
 #import models
  
+def MTL(filename):
+    contents = {}
+    mtl = None
+    try:
+        f = open(filename, "r")
+    except:
+        return contents
+    for line in f:
+        if line.startswith('#'): continue
+        values = line.split()
+        if not values: continue
+        if values[0] == 'newmtl':
+            mtl = contents[values[1]] = {}
+        elif mtl is None:
+            return contents
+            raise ValueError, "mtl file doesn't start with newmtl stmt"
+        elif values[0] == 'map_Kd':
+            mtl[values[0]] = values[1]
+        else:
+            pass#mtl[values[0]] = map(float, values[1:])
+    return contents
+
+ 
 class OBJ:
-    def __init__(self, filename, swapyz=False):
+    def __init__(self, filename, swapyz=True):
         """Loads a Wavefront OBJ file. """
         self.vertices = []
         self.normals = []
         self.texcoords = []
         self.faces = []
+        self.mtl = {None:{}}
  
         material = None
         for line in open(filename, "r"):
@@ -17,15 +41,19 @@ class OBJ:
             if values[0] == 'v':
                 v = map(float, values[1:4])
                 if swapyz:
-                    v = v[0], v[2], v[1]
+                    v = [v[0], v[2], v[1]]
                 self.vertices.append(v)
             elif values[0] == 'vn':
                 v = map(float, values[1:4])
                 if swapyz:
-                    v = v[0], v[2], v[1]
+                    v = [v[0], v[2], v[1]]
                 self.normals.append(v)
             elif values[0] == 'vt':
                 self.texcoords.append(map(float, values[1:3]))
+            elif values[0] in ('usemtl', 'usemat'):
+                material = values[1]
+            elif values[0] == 'mtllib':
+                self.mtl = MTL(values[1])
             elif values[0] == 'f':
                 face = []
                 texcoords = []
@@ -45,7 +73,9 @@ class OBJ:
         
         self.tris = []
         self.quads = []
+        self.tex = []
         for face,norms,texcoords,mat in self.faces:
+            diffuse = self.mtl.get(mat,{}).get("map_Kd",None)
             uv1=uv2=uv3=uv4=[0,0]
             if len(face)<3:
                 continue
@@ -66,6 +96,6 @@ class OBJ:
                     uv4 = self.texcoords[texcoords[3]-1]
                 s4 = v4+uv4
                 s+=[s4]
-                self.quads.append(s)
+                self.quads.append({"p":s,"t":diffuse})
             else:
-                self.tris.append(s)
+                self.tris.append({"p":s,"t":diffuse})

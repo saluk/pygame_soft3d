@@ -9,7 +9,7 @@ import random
 
 psyco.full()
 
-s_w,s_h = 150,100
+s_w,s_h = 200,150
 r_w,r_h = 400,300
 pygame.s_w = s_w
 pygame.s_h = s_h
@@ -40,9 +40,11 @@ def load_tex(img):
     tw = tex.get_width()-1
     th = tex.get_height()-1
     return texarr,tw,th
-    
-texarr,tw,th = load_tex("bm.bmp")
-texarr2,tw,th = load_tex("bm2.bmp")
+
+textures = {}
+for fn in os.listdir("."):
+    if fn.endswith(".bmp") or fn.endswith(".tga"):
+        textures[fn] = load_tex(fn)
 
 def trans(q,x=0,y=0,z=0):
     for p in q.points[:4]:
@@ -57,44 +59,13 @@ def uvscroll(q,u=0,v=0):
         p[3]+=u
         p[4]+=v
 
-quad = Quad([[0,0,0,0,0],
-            [140,0,0,1,0],
-            [140,140,0,1,1],
-            [0,140,0,0,1]],
-            [255,255,255],
-            texarr)
-quad2 = Quad([[0,0,140,0,0],
-            [140,0,140,1,0],
-            [140,140,140,1,1],
-            [0,140,140,0,1]],
-            [255,0,0],
-            texarr)
-quad3 = Quad([[0,0,0,0,0],
-            [0,0,140,1,0],
-            [0,140,140,1,1],
-            [0,140,0,0,1]],
-            [0,255,0],
-            texarr)
-quad4 = Quad([[0,0,0,0,0],
-            [0,0,140,1,0],
-            [0,140,140,1,1],
-            [0,140,0,0,1]],
-            [0,255,0],
-            texarr)
-tri = Tri([[-50,0,0,0,0],
-            [-50,0,140,1,0],
-            [-50,140,140,1,1]],
-            [0,255,0],
-            texarr2)
-trans(quad4,x=140)
-#quads = [quad,quad2,quad3,quad4,tri]
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
 
 objects = []
 for fn in os.listdir("."):
     if fn.endswith(".obj"):
-        objects.append(load_obj(fn,texarr))
+        objects.append(load_obj(fn,textures))
 
 def draw_point(x,y,z,u,v,texture):
     #pygame.points += 1
@@ -107,7 +78,8 @@ def draw_point(x,y,z,u,v,texture):
     if pygame.depth[y*s_w+x]<z:
         return
     pygame.depth[y*s_w+x] = z
-    pygame.arr[x,y] = texture[int(z*30)][int(u%1*tw),int(v%1*th)]
+    texarr,tw,th = texture
+    pygame.arr[x,y] = texarr[int(z*4)][int(u%1*tw),int(v%1*th)]
         
 def draw_tri(a,b,c,texture):
     """draws triangle with horizontal lines"""

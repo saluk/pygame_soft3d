@@ -117,15 +117,16 @@ def scale(q,amt):
         p[2]*=amt
             
 import obj
-def load_obj(fn,texarr):
+def load_obj(fn,textures):
     quads = []
     o = obj.OBJ(fn)
-    for points in o.tris:
-        t = Tri(points,[0,0,0],texarr)
+    deftex = textures[textures.keys()[0]]
+    for s in o.tris:
+        t = Tri(s["p"],[0,0,0],textures.get(s["t"],deftex))
         #scale(t,3)
         quads.append(t)
-    for points in o.quads:
-        t = Quad(points,[0,0,0],texarr)
+    for s in o.quads:
+        t = Quad(s["p"],[0,0,0],textures.get(s["t"],deftex))
         #scale(t,3)
         quads.append(t)
     return quads
