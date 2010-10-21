@@ -33,7 +33,7 @@ def load_tex(img):
         blank.fill([0,0,0])
         tex.set_alpha(alpha)
         blank.blit(tex,[0,0])
-        alpha = int(0.5*alpha)
+        alpha = int(0.8*alpha)
         arr = pygame.surfarray.array2d(blank)
         texarr.append(arr)
         mem.append(blank)
@@ -220,6 +220,13 @@ def draw_tri_point_down(a,b,c,texture):
 def draw_quad(q):
     """Draws a quad sample in screen space"""
     q.calc_corners()
+    inside = False
+    for c in q.corners:
+        if c[0]>=0 and c[0]<s_w and c[1]>=0 and c[1]<s_h and c[2]>0 and c[2]*30<50:
+            inside = True
+            break
+    if not inside:
+        return
     if isinstance(q,Tri):
         return draw_tri(q.corners[0],q.corners[1],q.corners[2],q.texture)
     ul = q.corners[0]
