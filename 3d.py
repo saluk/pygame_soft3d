@@ -73,7 +73,7 @@ def draw_point(x,y,z,u,v,texture):
         return
     if y<0 or y>=s_h:
         return
-    if z<=0:
+    if z<=0 or z*30>=50:
         return
     if pygame.depth[y*s_w+x]<z:
         return
