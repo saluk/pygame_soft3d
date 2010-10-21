@@ -58,6 +58,11 @@ def uvscroll(q,u=0,v=0):
     for p in q.points[:4]:
         p[3]+=u
         p[4]+=v
+def scale(q,amt):
+    for p in q.points[:4]:
+        p[0]*=amt
+        p[1]*=amt
+        p[2]*=amt
 
 odepth = [1000 for i in range(s_w*s_h)]
 pygame.depth = odepth[:]
