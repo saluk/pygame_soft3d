@@ -278,8 +278,7 @@ def main():
             [q.rot(-1,center=quads[0].points[0]) for q in quads]
         #uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
-            #[quad.calc_corners() for quad in quads]
-            next_update = 0#100
+            next_update = 60
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             pygame.points = 0
