@@ -271,7 +271,7 @@ def main():
             [q.rot(rz=1,center=quads[0].points[0]) for q in quads]
         if keys[pygame.K_f]:
             [q.rot(-1,center=quads[0].points[0]) for q in quads]
-        uvscroll(quads[0],u=0,v=.01)
+        #uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
             #[quad.calc_corners() for quad in quads]
             next_update = 0#100
