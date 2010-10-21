@@ -9,8 +9,8 @@ import random
 
 psyco.full()
 
-s_w,s_h = 200,150
-r_w,r_h = 400,300
+s_w,s_h = 160,120
+r_w,r_h = 256,192
 pygame.s_w = s_w
 pygame.s_h = s_h
 pygame.r_w = r_w
@@ -81,6 +81,7 @@ def draw_point(x,y,z,u,v,texture):
     if z<=0 or z*30>=50:
         return
     if pygame.depth[y*s_w+x]<z:
+        pygame.hidden += 1
         return
     pygame.depth[y*s_w+x] = z
     texarr,tw,th = texture
@@ -241,9 +242,10 @@ def main():
     running = 1
     quads = objects[0]
     pygame.points = 0
+    pygame.hidden = 0
     while running:
         dt = clock.tick(200)
-        pygame.display.set_caption("%s p:%s f:%s"%(clock.get_fps(),pygame.points,len(quads)))
+        pygame.display.set_caption("%s p:%s f:%s fp:%s"%(clock.get_fps(),pygame.points,len(quads),pygame.hidden))
         for e in pygame.event.get():
             if e.type==pygame.QUIT:
                 running = 0
@@ -289,7 +291,9 @@ def main():
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             pygame.points = 0
-            [draw_quad(q) for q in quads]
+            pygame.hidden = 0
+            for q in sorted(quads,key=lambda q: q.points[2]):
+                draw_quad(q)
             surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
             pygame.screen.blit(surf,[0,0])
         next_update -= dt
