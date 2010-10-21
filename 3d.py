@@ -23,7 +23,7 @@ pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
 from models import *
 
 def load_tex(img):
-    tex = pygame.image.load(img)
+    tex = pygame.transform.flip(pygame.image.load(img),0,1)
     
     texarr = []
     mem = []
