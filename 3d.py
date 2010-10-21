@@ -68,7 +68,7 @@ for fn in os.listdir("."):
         objects.append(load_obj(fn,textures))
 
 def draw_point(x,y,z,u,v,texture):
-    #pygame.points += 1
+    pygame.points += 1
     if x<0 or x>=s_w:
         return
     if y<0 or y>=s_h:
@@ -228,10 +228,10 @@ def main():
     next_update = 1
     running = 1
     quads = objects[0]
+    pygame.points = 0
     while running:
         dt = clock.tick(200)
-        pygame.display.set_caption("%s"%clock.get_fps())
-        pygame.points = 0
+        pygame.display.set_caption("%s p:%s f:%s"%(clock.get_fps(),pygame.points,len(quads)))
         for e in pygame.event.get():
             if e.type==pygame.QUIT:
                 running = 0
