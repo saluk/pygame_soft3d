@@ -11,16 +11,45 @@ psyco.full()
 
 s_w,s_h = 160,120
 r_w,r_h = 400,300
-pygame.s_w = s_w
-pygame.s_h = s_h
-pygame.r_w = r_w
-pygame.r_h = r_h
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
-pygame.surf = pygame.Surface([s_w,s_h])
-pygame.arr = pygame.surfarray.pixels2d(pygame.surf)
+
 
 from models import *
+
+class SoftContext:
+    def __init__(self,s_w,s_h,r_w,r_h):
+        self.s_w = s_w
+        self.s_h = s_h
+        self.r_w = r_w
+        self.r_h = r_h
+        self.surf = pygame.Surface([s_w,s_h])
+        self.arr = pygame.surfarray.pixels2d(self.surf)
+    def trans(self,p):
+        c = self
+        x,y,z,u,v = p
+        z = float((z*1.0/300.0)+1)
+        if z==0:
+            z=0.1
+        d = c.s_w
+        x = (d*x/float(c.r_w))/z
+        x+=c.s_w//2
+        d = c.s_h
+        y = (d*y/float(c.r_w))/z
+        y+=c.s_h//2
+        return [x,y,z,u,v]
+    def draw(self,quads):
+        pygame.arr = self.arr
+        pygame.depth = odepth[:]
+        self.surf.fill([0,0,0])
+        pygame.points = 0
+        pygame.hidden = 0
+        for q in sorted(quads,key=lambda q: q.points[2]):
+            draw_quad(q,self)
+        surf = pygame.transform.scale(self.surf,[self.r_w,self.r_h])
+        return surf
+
+softcontext = SoftContext(s_w,s_h,r_w,r_h)
 
 def load_tex(img):
     tex = pygame.transform.flip(pygame.image.load(img),0,1)
@@ -218,9 +247,9 @@ def draw_tri_point_down(a,b,c,texture):
         eu+=du2
         ev+=dv2
         
-def draw_quad(q):
+def draw_quad(q,c):
     """Draws a quad sample in screen space"""
-    q.calc_corners()
+    q.calc_corners(c)
     inside = False
     for c in q.corners:
         if c[0]>=0 and c[0]<s_w and c[1]>=0 and c[1]<s_h and c[2]>0 and c[2]*30<50:
@@ -290,13 +319,7 @@ def main():
         #uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
             next_update = 30
-            pygame.depth = odepth[:]
-            pygame.surf.fill([0,0,0])
-            pygame.points = 0
-            pygame.hidden = 0
-            for q in sorted(quads,key=lambda q: q.points[2]):
-                draw_quad(q)
-            surf = pygame.transform.scale(pygame.surf,[r_w,r_h])
+            surf = softcontext.draw(quads)
             pygame.screen.blit(surf,[0,0])
         next_update -= dt
         pygame.display.flip()
