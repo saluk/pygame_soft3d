@@ -9,11 +9,10 @@ import random
 
 psyco.full()
 
-s_w,s_h = 160,120
-r_w,r_h = 400,300
+s_w,s_h = 192,120
+r_w,r_h = 256,192
 pygame.screen = s = pygame.display.set_mode([r_w,r_h],pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
-
 
 from models import *
 
@@ -25,6 +24,7 @@ class SoftContext:
         self.r_h = r_h
         self.surf = pygame.Surface([s_w,s_h]).convert()
         self.arr = pygame.surfarray.pixels2d(self.surf)
+        self.odepth = [1000 for i in range(s_w*s_h)]
     def trans(self,p):
         c = self
         x,y,z,u,v = p
@@ -40,7 +40,7 @@ class SoftContext:
         return [x,y,z,u,v]
     def draw(self,quads):
         pygame.arr = self.arr
-        pygame.depth = odepth[:]
+        pygame.depth = self.odepth[:]
         self.surf.fill([255,0,255])
         pygame.points = 0
         pygame.hidden = 0
@@ -50,7 +50,11 @@ class SoftContext:
         surf.set_colorkey([255,0,255])
         return surf
 
-softcontext = SoftContext(s_w,s_h,r_w,r_h)
+softcontext = SoftContext(s_w,s_h,192,120)
+
+bg1 = pygame.image.load("background-3devidence.png")
+bg2 = pygame.image.load("background-3devidence2.png")
+bg2.set_colorkey([255,0,255])
 
 def load_tex(img):
     tex = pygame.transform.flip(pygame.image.load(img),0,1)
@@ -71,11 +75,6 @@ def load_tex(img):
     th = tex.get_height()-1
     return texarr,tw,th
 
-textures = {}
-for fn in os.listdir("."):
-    if fn.endswith(".bmp") or fn.endswith(".tga"):
-        textures[fn] = load_tex(fn)
-
 def trans(q,x=0,y=0,z=0):
     for p in q.points[:4]:
         p[0]+=x
@@ -93,14 +92,6 @@ def scale(q,amt):
         p[0]*=amt
         p[1]*=amt
         p[2]*=amt
-
-odepth = [1000 for i in range(s_w*s_h)]
-pygame.depth = odepth[:]
-
-objects = []
-for fn in os.listdir("."):
-    if fn.endswith(".obj"):
-        objects.append(load_obj(fn,textures))
 
 def draw_point(x,y,z,u,v,texture):
     pygame.points += 1
@@ -268,14 +259,22 @@ def draw_quad(q,c):
     draw_tri(ul,br,bl,q.texture)
 
 def main():
+    textures = {}
+    for fn in os.listdir("."):
+        if fn.endswith(".bmp") or fn.endswith(".tga"):
+            textures[fn] = load_tex(fn)
+    objects = []
+    for fn in os.listdir("."):
+        if fn.endswith(".obj"):
+            objects.append(load_obj(fn,textures))
     next_update = 1
     running = 1
     quads = objects[0]
     pygame.points = 0
     pygame.hidden = 0
     while running:
-        dt = clock.tick(200)
-        pygame.display.set_caption("%s p:%s f:%s fp:%s"%(clock.get_fps(),pygame.points,len(quads),pygame.hidden))
+        dt = clock.tick(60)
+        pygame.display.set_caption("%s p:%s f:%s hp:%s"%(clock.get_fps(),pygame.points,len(quads),pygame.hidden))
         for e in pygame.event.get():
             if e.type==pygame.QUIT:
                 running = 0
@@ -321,8 +320,9 @@ def main():
         if next_update<0:
             next_update = 30
             surf = softcontext.draw(quads)
-            pygame.screen.fill([0,0,0])
-            pygame.screen.blit(surf,[0,0])
+            pygame.screen.blit(bg1,[0,0])
+            pygame.screen.blit(surf,[32,16])
+            pygame.screen.blit(bg2,[0,0])
         next_update -= dt
         pygame.display.flip()
 
