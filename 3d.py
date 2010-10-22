@@ -23,7 +23,7 @@ class SoftContext:
         self.s_h = s_h
         self.r_w = r_w
         self.r_h = r_h
-        self.surf = pygame.Surface([s_w,s_h])
+        self.surf = pygame.Surface([s_w,s_h]).convert()
         self.arr = pygame.surfarray.pixels2d(self.surf)
     def trans(self,p):
         c = self
@@ -41,12 +41,13 @@ class SoftContext:
     def draw(self,quads):
         pygame.arr = self.arr
         pygame.depth = odepth[:]
-        self.surf.fill([0,0,0])
+        self.surf.fill([255,0,255])
         pygame.points = 0
         pygame.hidden = 0
         for q in sorted(quads,key=lambda q: q.points[2]):
             draw_quad(q,self)
         surf = pygame.transform.scale(self.surf,[self.r_w,self.r_h])
+        surf.set_colorkey([255,0,255])
         return surf
 
 softcontext = SoftContext(s_w,s_h,r_w,r_h)
@@ -320,6 +321,7 @@ def main():
         if next_update<0:
             next_update = 30
             surf = softcontext.draw(quads)
+            pygame.screen.fill([0,0,0])
             pygame.screen.blit(surf,[0,0])
         next_update -= dt
         pygame.display.flip()
