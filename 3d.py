@@ -10,7 +10,7 @@ import random
 psyco.full()
 
 s_w,s_h = 160,120
-r_w,r_h = 256,192
+r_w,r_h = 400,300
 pygame.s_w = s_w
 pygame.s_h = s_h
 pygame.r_w = r_w
@@ -263,6 +263,8 @@ def main():
                 if i>=len(objects):
                     i = 0
                 quads = objects[i]
+            if e.type==pygame.KEYDOWN and e.key==pygame.K_F9:
+                pygame.image.save(pygame.screen,"screen.jpg")
         keys = pygame.key.get_pressed()
         spd = 5
         if keys[pygame.K_a]:
@@ -287,7 +289,7 @@ def main():
             [q.rot(-1,center=quads[0].points[0]) for q in quads]
         #uvscroll(quads[0],u=0,v=.01)
         if next_update<0:
-            next_update = 60
+            next_update = 30
             pygame.depth = odepth[:]
             pygame.surf.fill([0,0,0])
             pygame.points = 0

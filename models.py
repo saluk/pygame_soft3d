@@ -120,7 +120,7 @@ import obj
 def load_obj(fn,textures):
     quads = []
     o = obj.OBJ(fn)
-    deftex = textures[textures.keys()[0]]
+    deftex = textures["bm.bmp"]
     for s in o.tris:
         t = Tri(s["p"],[0,0,0],textures.get(s["t"],deftex))
         #scale(t,3)
