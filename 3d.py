@@ -30,7 +30,7 @@ class SoftContext:
         x,y,z,u,v = p
         z = float((z*1.0/300.0)+1)
         if z==0:
-            z=0.1
+            z=0.001
         d = c.s_w
         x = (d*x/float(c.r_w))/z
         x+=c.s_w//2
@@ -99,7 +99,7 @@ def draw_point(x,y,z,u,v,texture):
         return
     if y<0 or y>=s_h:
         return
-    if z<=0 or z*30>=50:
+    if z<=0.001 or z*30>=50:
         return
     if pygame.depth[y*s_w+x]<z:
         pygame.hidden += 1
